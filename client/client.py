@@ -126,6 +126,7 @@ class RedditClient:
             print(
                 f"Comment ID: {expanded_comment.comment_id}, Score: {expanded_comment.score}")
 
+    # Extra Credit
     def monitor_updates(self):
         """
             Monitor and print score updates for a post and its comments.
