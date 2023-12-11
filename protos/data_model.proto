@@ -1,0 +1,106 @@
+// Author - Akshita Patil
+
+syntax = "proto3";
+
+// User entity
+message User {
+  string user_id = 1;  // Field number 1
+}
+
+// Enum for post state
+enum POST_STATE {
+  NORMAL = 0;  // Field number 0
+  LOCKED = 1;  // Field number 1
+  HIDDEN = 2;  // Field number 2
+}
+
+// Subreddit entity
+message Subreddit {
+  string subreddit_id = 1;  // Field number 1
+  string name = 2;  // Field number 2
+  bool public = 3;  // Field number 3
+  bool private = 4;  // Field number 4
+  bool hidden = 5;  // Field number 5
+  repeated string tags = 6;  // Field number 6 (repeated field)
+}
+
+// Post entity
+message Post {
+  string post_id = 1;  // Field number 1
+  string title = 2;  // Field number 2
+  string text = 3;  // Field number 3
+  string video_url = 4;  // Field number 4
+  string image_url = 5;  // Field number 5
+  string author = 6;  // Field number 6
+  int32 score = 7;  // Field number 7
+  POST_STATE state = 8;  // Field number 8
+  string publication_date = 9;  // Field number 9
+  Subreddit subreddit = 10;  // Field number 10
+}
+
+// Comment entity
+message Comment {
+  string comment_id = 1;  // Field number 1
+  string text = 2;  // Field number 2
+  string author = 3;  // Field number 3
+  int32 score = 4;  // Field number 4
+  bool hidden = 5;  // Field number 5
+  string publication_date = 6;  // Field number 6
+  string post_id = 7;
+  bool replies_exist = 8;
+}
+
+// Enum for vote action
+enum VoteAction {
+  UPVOTE = 0;
+  DOWNVOTE = 1;
+}
+
+// Request message for voting actions
+message VoteRequest {
+  VoteAction action = 1;
+  string post_id = 2;
+  string comment_id = 3;
+}
+
+// Request message for retrieving a list of N most upvoted comments under a post
+message TopCommentsRequest {
+  string post_id = 1;  // Field number 1
+  int32 N = 2;  // Field number 2
+  string comment_id = 3;
+}
+// Add this to your proto file
+message UpdateResponse {
+  string entity_id = 1;
+  int32 score = 2;
+}
+
+// Service for Reddit API
+service RedditService {
+  // Create a Post
+  rpc CreatePost (Post) returns (Post);
+
+  // Upvote or downvote a Post
+  rpc VotePost (VoteRequest) returns (Post);
+
+  // Retrieve Post content
+  rpc GetPostContent (Post) returns (Post);
+
+  // Create a Comment
+  rpc CreateComment (Comment) returns (Comment);
+
+  // Upvote or downvote a Comment
+  rpc VoteComment (VoteRequest) returns (Comment);
+
+  // Retrieve a list of N most upvoted comments under a post
+  rpc GetTopComments (TopCommentsRequest) returns (stream Comment);
+
+  // Expand a comment branch (tree of depth 2)
+  rpc ExpandCommentBranch (Comment) returns (stream Comment);
+
+  // Extra credit: Monitor updates - client initiates the call with a post
+  rpc MonitorUpdates (Post) returns (stream Post);
+}
+
+
+//python -m grpc_tools.protoc -I. --python_out=./service --grpc_python_out=./service data_model.proto
