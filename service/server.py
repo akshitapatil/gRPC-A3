@@ -246,60 +246,61 @@ class RedditServicer(RedditServiceServicer):
             context.set_details("Comment not found")
             return Comment()
 
-    # def MonitorUpdates(self, request, context):
-    #     """
-    #         Monitors updates for the post and its comments.
-    #
-    #         This method initializes scores for the post and its comments, sends initial scores to the client,
-    #         and processes additional comment IDs from the client stream, sending corresponding score updates.
-    #
-    #         Args:
-    #             request: An instance of the UpdateRequest message containing the post ID.
-    #             context: The gRPC context.
-    #
-    #         Yields:
-    #             UpdateResponse: The score updates for the post and its comments.
-    #
-    #         Raises:
-    #             grpc.RpcError: If there is an issue with the client stream.
-    #
-    #         Note:
-    #             This implementation uses an asynchronous client stream to handle updates from the client.
-    #         """
-    #     # Initialize scores for the post and its comments
-    #     post_id = request.post_id
-    #     post = posts.get(post_id)
-    #     if post:
-    #         self.current_scores[post_id] = post.score
-    #         for comment_id in post.comments:
-    #             comment = comments.get(comment_id)
-    #             if comment:
-    #                 self.current_scores[comment_id] = comment.score
-    #
-    #         # Send initial scores to the client
-    #         yield self.create_update_response(post_id, self.current_scores[post_id])
-    #         for comment_id in post.comments:
-    #             yield self.create_update_response(comment_id, self.current_scores[comment_id])
-    #
-    #         # Process additional comment IDs from the client stream
-    #         try:
-    #             async for comment_id in context.stream:
-    #                 comment = comments.get(comment_id)
-    #                 if comment:
-    #                     self.current_scores[comment_id] = comment.score
-    #                     yield self.create_update_response(comment_id, self.current_scores[comment_id])
-    #                 else:
-    #                     context.set_code(grpc.StatusCode.NOT_FOUND)
-    #                     context.set_details(f"Comment with ID {comment_id} not found")
-    #         except grpc.RpcError as e:
-    #             # Handle client stream termination (e.g., when the client stops sending comment IDs)
-    #             if e.code() == grpc.StatusCode.CANCELLED:
-    #                 print("Client stream terminated")
-    #             else:
-    #                 raise
-    #
-    # def create_update_response(self, entity_id, score):
-    #     return UpdateResponse(entity_id=entity_id, score=score)
+    # Extra Credit
+    def MonitorUpdates(self, request, context):
+        """
+            Monitors updates for the post and its comments.
+    
+            This method initializes scores for the post and its comments, sends initial scores to the client,
+            and processes additional comment IDs from the client stream, sending corresponding score updates.
+    
+            Args:
+                request: An instance of the UpdateRequest message containing the post ID.
+                context: The gRPC context.
+    
+            Yields:
+                UpdateResponse: The score updates for the post and its comments.
+    
+            Raises:
+                grpc.RpcError: If there is an issue with the client stream.
+    
+            Note:
+                This implementation uses an asynchronous client stream to handle updates from the client.
+            """
+        # Initialize scores for the post and its comments
+        post_id = request.post_id
+        post = posts.get(post_id)
+        if post:
+            self.current_scores[post_id] = post.score
+            for comment_id in post.comments:
+                comment = comments.get(comment_id)
+                if comment:
+                    self.current_scores[comment_id] = comment.score
+    
+            # Send initial scores to the client
+            yield self.create_update_response(post_id, self.current_scores[post_id])
+            for comment_id in post.comments:
+                yield self.create_update_response(comment_id, self.current_scores[comment_id])
+    
+            # Process additional comment IDs from the client stream
+            try:
+                async for comment_id in context.stream:
+                    comment = comments.get(comment_id)
+                    if comment:
+                        self.current_scores[comment_id] = comment.score
+                        yield self.create_update_response(comment_id, self.current_scores[comment_id])
+                    else:
+                        context.set_code(grpc.StatusCode.NOT_FOUND)
+                        context.set_details(f"Comment with ID {comment_id} not found")
+            except grpc.RpcError as e:
+                # Handle client stream termination (e.g., when the client stops sending comment IDs)
+                if e.code() == grpc.StatusCode.CANCELLED:
+                    print("Client stream terminated")
+                else:
+                    raise
+    
+    def create_update_response(self, entity_id, score):
+        return UpdateResponse(entity_id=entity_id, score=score)
 
 
 def serve():
